@@ -2,44 +2,49 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Simple Inventory System</title>
+<title>Inventory System</title>
+
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #f4f4f4;
-        padding: 20px;
-    }
-    h2 {
-        text-align: center;
-    }
-    form {
-        background: #fff;
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 5px;
-    }
-    input, button {
-        padding: 8px;
-        margin: 5px;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        background: #fff;
-    }
-    th, td {
-        border: 1px solid #ccc;
-        padding: 8px;
-        text-align: center;
-    }
-    th {
-        background: #eee;
-    }
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    padding: 20px;
+}
+h2 {
+    text-align: center;
+}
+form {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+input, button {
+    padding: 8px;
+    margin: 5px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+}
+th {
+    background: #eee;
+}
+button {
+    cursor: pointer;
+}
 </style>
 </head>
+
 <body>
 
-<h2>Simple Inventory System</h2>
+<h2>Inventory System</h2>
 
 <form id="inventoryForm">
     <input type="text" id="itemName" placeholder="Item Name" required>
@@ -49,43 +54,66 @@
 </form>
 
 <table>
-    <thead>
-        <tr>
-            <th>Item Name</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody id="inventoryTable">
-    </tbody>
+<thead>
+<tr>
+    <th>Item</th>
+    <th>Stock</th>
+    <th>Price</th>
+    <th>Actions</th>
+</tr>
+</thead>
+<tbody id="inventoryTable"></tbody>
 </table>
 
 <script>
+let inventory = JSON.parse(localStorage.getItem("inventory")) || [];
+
+function saveInventory() {
+    localStorage.setItem("inventory", JSON.stringify(inventory));
+}
+
+function renderInventory() {
+    let table = document.getElementById("inventoryTable");
+    table.innerHTML = "";
+
+    inventory.forEach((item, index) => {
+        let row = table.insertRow();
+
+        row.insertCell(0).innerText = item.name;
+        row.insertCell(1).innerText = item.qty;
+        row.insertCell(2).innerText = item.price;
+
+        let actionCell = row.insertCell(3);
+
+        let minusBtn = document.createElement("button");
+        minusBtn.innerText = "-1 Stock";
+        minusBtn.onclick = () => {
+            item.qty -= 1;
+            if (item.qty <= 0) {
+                inventory.splice(index, 1);
+            }
+            saveInventory();
+            renderInventory();
+        };
+
+        actionCell.appendChild(minusBtn);
+    });
+}
+
 document.getElementById("inventoryForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
-    let name = document.getElementById("itemName").value;
-    let qty = document.getElementById("quantity").value;
-    let price = document.getElementById("price").value;
+    let name = itemName.value;
+    let qty = parseInt(quantity.value);
+    let price = parseFloat(price.value);
 
-    let table = document.getElementById("inventoryTable");
-    let row = table.insertRow();
-
-    row.insertCell(0).innerText = name;
-    row.insertCell(1).innerText = qty;
-    row.insertCell(2).innerText = price;
-
-    let actionCell = row.insertCell(3);
-    let deleteBtn = document.createElement("button");
-    deleteBtn.innerText = "Delete";
-    deleteBtn.onclick = function() {
-        table.deleteRow(row.rowIndex - 1);
-    };
-    actionCell.appendChild(deleteBtn);
-
-    document.getElementById("inventoryForm").reset();
+    inventory.push({ name, qty, price });
+    saveInventory();
+    renderInventory();
+    this.reset();
 });
+
+renderInventory();
 </script>
 
 </body>
