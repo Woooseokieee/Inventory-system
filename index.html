@@ -2,90 +2,163 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Simple Inventory System</title>
+<title>Advanced Inventory System</title>
+
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #f4f4f4;
-        padding: 20px;
-    }
-    h2 {
-        text-align: center;
-    }
-    form {
-        background: #fff;
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 5px;
-    }
-    input, button {
-        padding: 8px;
-        margin: 5px;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        background: #fff;
-    }
-    th, td {
-        border: 1px solid #ccc;
-        padding: 8px;
-        text-align: center;
-    }
-    th {
-        background: #eee;
-    }
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    padding: 20px;
+}
+
+h2 {
+    text-align: center;
+}
+
+form, .search-box {
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+}
+
+input, button {
+    padding: 8px;
+    margin: 5px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background: #eee;
+}
+
+button {
+    cursor: pointer;
+}
+
+.btn-add { background: #28a745; color: white; }
+.btn-edit { background: #007bff; color: white; }
+.btn-remove { background: #dc3545; color: white; }
+.btn-stock { background: #6c757d; color: white; }
+
+button:hover {
+    opacity: 0.85;
+}
 </style>
 </head>
+
 <body>
 
-<h2>Simple Inventory System</h2>
+<h2>Advanced Inventory System</h2>
 
-<form id="inventoryForm">
-    <input type="text" id="itemName" placeholder="Item Name" required>
-    <input type="number" id="quantity" placeholder="Quantity" required>
+<form id="productForm">
+    <input type="text" id="name" placeholder="Product Name" required>
     <input type="number" id="price" placeholder="Price" required>
-    <button type="submit">Add Item</button>
+    <input type="number" id="stock" placeholder="Stock" required>
+    <button type="submit" class="btn-add">Add Product</button>
 </form>
 
+<div class="search-box">
+    <input type="text" id="search" placeholder="Search product..." onkeyup="renderProducts()">
+</div>
+
 <table>
-    <thead>
-        <tr>
-            <th>Item Name</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody id="inventoryTable">
-    </tbody>
+<thead>
+<tr>
+    <th>Name</th>
+    <th>Price</th>
+    <th>Stock</th>
+    <th>Actions</th>
+</tr>
+</thead>
+<tbody id="productTable"></tbody>
 </table>
 
 <script>
-document.getElementById("inventoryForm").addEventListener("submit", function(e) {
+let products = JSON.parse(localStorage.getItem("products")) || [];
+
+document.getElementById("productForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
-    let name = document.getElementById("itemName").value;
-    let qty = document.getElementById("quantity").value;
-    let price = document.getElementById("price").value;
-
-    let table = document.getElementById("inventoryTable");
-    let row = table.insertRow();
-
-    row.insertCell(0).innerText = name;
-    row.insertCell(1).innerText = qty;
-    row.insertCell(2).innerText = price;
-
-    let actionCell = row.insertCell(3);
-    let deleteBtn = document.createElement("button");
-    deleteBtn.innerText = "Delete";
-    deleteBtn.onclick = function() {
-        table.deleteRow(row.rowIndex - 1);
+    const product = {
+        id: Date.now(),
+        name: name.value,
+        price: parseFloat(price.value),
+        stock: parseInt(stock.value)
     };
-    actionCell.appendChild(deleteBtn);
 
-    document.getElementById("inventoryForm").reset();
+    products.push(product);
+    save();
+    this.reset();
 });
+
+function renderProducts() {
+    const search = document.getElementById("search").value.toLowerCase();
+    const table = document.getElementById("productTable");
+    table.innerHTML = "";
+
+    products
+        .filter(p => p.name.toLowerCase().includes(search))
+        .forEach(p => {
+            table.innerHTML += `
+            <tr>
+                <td>${p.name}</td>
+                <td>₱${p.price.toFixed(2)}</td>
+                <td>${p.stock}</td>
+                <td>
+                    <button class="btn-stock" onclick="changeStock(${p.id}, 1)">+</button>
+                    <button class="btn-stock" onclick="changeStock(${p.id}, -1)">-</button>
+                    <button class="btn-edit" onclick="editProduct(${p.id})">Edit</button>
+                    <button class="btn-remove" onclick="removeProduct(${p.id})">Remove</button>
+                </td>
+            </tr>`;
+        });
+}
+
+function changeStock(id, value) {
+    const product = products.find(p => p.id === id);
+    if (product.stock + value >= 0) {
+        product.stock += value;
+        save();
+    }
+}
+
+function editProduct(id) {
+    const product = products.find(p => p.id === id);
+    const newName = prompt("Edit product name:", product.name);
+    const newPrice = prompt("Edit price:", product.price);
+
+    if (newName !== null && newPrice !== null) {
+        product.name = newName;
+        product.price = parseFloat(newPrice);
+        save();
+    }
+}
+
+function removeProduct(id) {
+    if (confirm("Are you sure you want to remove this product?")) {
+        products = products.filter(p => p.id !== id);
+        save();
+    }
+}
+
+function save() {
+    localStorage.setItem("products", JSON.stringify(products));
+    renderProducts();
+}
+
+renderProducts();
 </script>
 
 </body>
